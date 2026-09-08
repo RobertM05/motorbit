@@ -1,19 +1,128 @@
 <!doctype html>
-<html lang="ro">
+<html lang="ro" class="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Motorbit - Oferte OLX și Autovit</title>
     <meta name="description" content="Cea mai inteligenta metoda de a-ti gasi masina. Scoring al ofertelor, analiza de piata si anunturi de pe OLX si Autovit." />
+    
+    <!-- Preconnect to CDN origins -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://api.fontshare.com" crossorigin>
-    <link href="https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    
+    <!-- Asynchronous non-render-blocking font loading -->
+    <link rel="preload" as="style" href="https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&display=swap">
+    <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&display=swap" media="print" onload="this.media='all'">
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Geist:wght@300;400;500;600;700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Geist:wght@300;400;500;600;700&display=swap" media="print" onload="this.media='all'">
+    <noscript>
+      <link href="https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&display=swap" rel="stylesheet">
+      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    </noscript>
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    
+    <!-- Critical CSS for instant FCP / LCP render -->
+    <style>
+      :root {
+        --bg-primary: #0d1117;
+        --text-primary: #e6edf3;
+        --text-secondary: #8b949e;
+        --border-shell: #21262d;
+      }
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body {
+        background-color: #0d1117;
+        color: #e6edf3;
+        font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        overflow-x: hidden;
+        width: 100%;
+        min-height: 100vh;
+      }
+      .top-nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        height: 56px;
+        padding: 0 2rem;
+        background: #0d1117;
+        border-bottom: 1px solid #21262d;
+        position: sticky;
+        top: 0;
+        z-index: 50;
+      }
+      .nav-brand {
+        font-size: 1.4rem;
+        font-weight: 800;
+        letter-spacing: -0.04em;
+        color: #e6edf3;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .hero-section {
+        text-align: left;
+        min-height: 480px;
+        position: relative;
+        background-color: #0d1117;
+        display: flex;
+        align-items: center;
+      }
+      .container {
+        width: 100%;
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 4rem 2rem 2rem 2rem;
+      }
+      .hero-title {
+        font-size: clamp(2.5rem, 5vw, 4.5rem);
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        line-height: 1.1;
+        margin-bottom: 1rem;
+        color: #e6edf3;
+      }
+      .hero-subtitle {
+        font-size: 1.25rem;
+        color: #8b949e;
+        max-width: 600px;
+        line-height: 1.5;
+        margin-bottom: 1.5rem;
+      }
+      .hero-features {
+        font-size: 0.9rem;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        color: #e6edf3;
+        text-transform: uppercase;
+      }
+      @media (max-width: 768px) {
+        .container { padding: 2rem 1rem; }
+        .hero-section { min-height: 380px; }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <nav class="top-nav">
+        <div class="nav-brand">
+          <div style="width: 32px; height: 32px; overflow: hidden; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
+            <img src="/logo.webp" alt="Motorbit Logo" width="32" height="32" style="width: 100%; height: 100%; object-fit: cover;" fetchpriority="high" />
+          </div>
+          <span>MOTORBIT</span>
+        </div>
+      </nav>
+      <main id="main-content">
+        <section class="hero-section">
+          <div class="container">
+            <h1 class="hero-title">MOTORBIT</h1>
+            <p class="hero-subtitle">Găsește cele mai bune oferte auto</p>
+            <div class="hero-features">OLX &amp; Autovit • Deal Scoring • Analiza de Piață</div>
+          </div>
+        </section>
+      </main>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

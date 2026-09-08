@@ -25,7 +25,7 @@ const DealOfTheDay = () => {
                                 setLoading(false);
                             }
                         }
-                    } catch (e) { /* fall through to API */ }
+                    } catch { /* fall through to API */ }
                 }
                 if (deals.length > 0) return;
                 const cached = getCached('top_deals');
@@ -153,7 +153,7 @@ const DealOfTheDay = () => {
                                         src={top.image || "https://placehold.co/600x400/1e293b/cbd5e1?text=No+Image"}
                                         alt={top.title}
                                         className="dotd-featured-image"
-                                        loading="lazy"
+                                        fetchPriority="high"
                                         referrerPolicy="no-referrer"
                                         onError={(e) => { e.target.onerror = null; e.target.src = "https://placehold.co/600x400/1e293b/cbd5e1?text=Error"; }}
                                     />
