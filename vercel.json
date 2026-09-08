@@ -17,8 +17,29 @@
   ],
   "routes": [
     {
+      "src": "/api/(brands|models/.*)",
+      "headers": {
+        "cache-control": "public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400"
+      },
+      "dest": "/backend/main.py"
+    },
+    {
+      "src": "/api/(site/stats|deals/top)",
+      "headers": {
+        "cache-control": "public, max-age=120, s-maxage=300, stale-while-revalidate=600"
+      },
+      "dest": "/backend/main.py"
+    },
+    {
       "src": "/api/(.*)",
       "dest": "/backend/main.py"
+    },
+    {
+      "src": "/initial-data\\.json",
+      "headers": {
+        "cache-control": "public, max-age=300, s-maxage=600, stale-while-revalidate=86400"
+      },
+      "dest": "/frontend/car-sniper/initial-data.json"
     },
     {
       "src": "/assets/(.*)",

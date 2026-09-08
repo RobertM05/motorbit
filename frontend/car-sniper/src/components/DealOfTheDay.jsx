@@ -3,6 +3,7 @@ import CarCard from './CarCard';
 import SkeletonCard from './SkeletonCard';
 import { useLanguage } from '../LanguageContext';
 import { getCached, setCache } from '../utils/cache';
+import { fetchInitialData } from '../utils/initialData';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '' : 'http://127.0.0.1:8000');
 
@@ -17,13 +18,11 @@ const DealOfTheDay = () => {
             try {
                 if (deals.length === 0) {
                     try {
-                        const initRes = await fetch('/initial-data.json');
-                        if (initRes.ok) {
-                            const initData = await initRes.json();
-                            if (initData.deals && initData.deals.length > 0) {
-                                setDeals(initData.deals);
-                                setLoading(false);
-                            }
+                        const initData = await fetchInitialData();
+                        if (initData && initData.deals && initData.deals.length > 0) {
+                            setDeals(initData.deals);
+                            setLoading(false);
+                            return;
                         }
                     } catch { /* fall through to API */ }
                 }

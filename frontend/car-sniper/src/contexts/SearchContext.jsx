@@ -4,6 +4,7 @@ import { getSearchHistory, addSearchHistory } from '../utils/searchHistory';
 import { getComparedCars, clearComparedCars } from '../utils/carComparison';
 import { logEvent } from '../utils/analytics';
 import { getCached, setCache } from '../utils/cache';
+import { fetchInitialData } from '../utils/initialData';
 
 const SearchContext = createContext(null);
 
@@ -59,33 +60,50 @@ export const SearchProvider = ({ children }) => {
   const [siteStats, setSiteStats] = useState({});
 
   useEffect(() => {
-    fetchBrands();
-    
-    // Fetch initial stats
-    fetch('/initial-data.json').then(r => r.json()).then(d => { 
-      if (d.stats && d.stats.carsMonitored) { 
-        setSiteStats(d.stats); 
-        setCache('site_stats', d.stats); 
-      } 
-    }).catch(() => {});
-    
+    // 1. Instant hydration from client cache
+    const cachedBrands = getCached('car_brands');
+    if (cachedBrands && cachedBrands.length > 0) {
+      setBrands(cachedBrands);
+    }
     const cachedStats = getCached('site_stats');
-    if (cachedStats) setSiteStats(cachedStats);
-    
-    fetch(API_BASE_URL + '/api/site/stats').then(r => r.json()).then(d => { 
-      setSiteStats(d); 
-      setCache('site_stats', d); 
-    }).catch(() => {});
-    
+    if (cachedStats) {
+      setSiteStats(cachedStats);
+    }
+
+    // 2. Fetch deduplicated initial preloaded data
+    fetchInitialData().then((d) => {
+      if (!d) return;
+      if (d.brands && d.brands.length > 0) {
+        setBrands((prev) => (prev.length === 0 ? d.brands : prev));
+        setCache('car_brands', d.brands, 86400000); // 24h
+      }
+      if (d.stats && d.stats.carsMonitored) {
+        setSiteStats(d.stats);
+        setCache('site_stats', d.stats);
+      }
+    });
+
+    // 3. Background revalidation
+    fetchBrands();
+
     setComparedCars(getComparedCars());
   }, []);
 
   const fetchBrands = async () => {
-    setLoadingBrands(true);
+    // Only show loading indicator if brands list is empty
+    setBrands((currentBrands) => {
+      if (!currentBrands || currentBrands.length === 0) setLoadingBrands(true);
+      return currentBrands;
+    });
     try {
       const response = await fetch(`${API_BASE_URL}/api/brands`);
-      const data = await response.json();
-      if (data.brands) setBrands(data.brands);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.brands && data.brands.length > 0) {
+          setBrands(data.brands);
+          setCache('car_brands', data.brands, 86400000);
+        }
+      }
     } catch (err) {
       console.error('Error loading brands:', err);
     } finally {
