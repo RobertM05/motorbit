@@ -90,11 +90,6 @@ export const SearchProvider = ({ children }) => {
   }, []);
 
   const fetchBrands = async () => {
-    // Only show loading indicator if brands list is empty
-    setBrands((currentBrands) => {
-      if (!currentBrands || currentBrands.length === 0) setLoadingBrands(true);
-      return currentBrands;
-    });
     try {
       const response = await fetch(`${API_BASE_URL}/api/brands`);
       if (response.ok) {
@@ -111,30 +106,49 @@ export const SearchProvider = ({ children }) => {
     }
   };
 
-  const fetchModels = async (brand) => {
-    if (!brand) {
-      setModels([]);
-      return;
-    }
-    setLoadingModels(true);
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/models/${encodeURIComponent(brand)}`);
-      const data = await response.json();
-      setModels(data.models || []);
-    } catch (err) {
-      console.error('Error loading models:', err);
-      setModels([]);
-    } finally {
-      setLoadingModels(false);
-    }
-  };
-
   useEffect(() => {
+    let ignore = false;
     if (formData.make) {
-      fetchModels(formData.make);
+      const brand = formData.make;
+      const cacheKey = `models_${brand.toLowerCase().trim()}`;
+      const cached = getCached(cacheKey);
+
+      if (cached && Array.isArray(cached) && cached.length > 0) {
+        setModels(cached);
+        setLoadingModels(false);
+      } else {
+        setLoadingModels(true);
+        fetch(`${API_BASE_URL}/api/models/${encodeURIComponent(brand)}`)
+          .then((res) => (res.ok ? res.json() : {}))
+          .then((data) => {
+            if (!ignore) {
+              const list = data.models || [];
+              setModels(list);
+              if (list.length > 0) {
+                setCache(cacheKey, list, 86400000);
+              }
+            }
+          })
+          .catch((err) => {
+            if (!ignore) {
+              console.error('Error loading models:', err);
+              setModels([]);
+            }
+          })
+          .finally(() => {
+            if (!ignore) {
+              setLoadingModels(false);
+            }
+          });
+      }
     } else {
       setModels([]);
+      setLoadingModels(false);
     }
+
+    return () => {
+      ignore = true;
+    };
   }, [formData.make]);
 
   // Sync sidebar filters from formData

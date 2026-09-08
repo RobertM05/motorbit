@@ -7,7 +7,7 @@ let cachedInitialData = null;
  * from issuing duplicate requests on initial page load.
  */
 export async function fetchInitialData() {
-  if (cachedInitialData) {
+  if (cachedInitialData && typeof cachedInitialData === 'object') {
     return cachedInitialData;
   }
   if (!initialDataPromise) {
@@ -15,13 +15,24 @@ export async function fetchInitialData() {
       .then(async (res) => {
         if (!res.ok) return null;
         const data = await res.json();
-        cachedInitialData = data;
-        return data;
+        if (data && typeof data === 'object') {
+          cachedInitialData = data;
+          return data;
+        }
+        return null;
       })
-      .catch(() => null)
+      .catch((err) => {
+        console.warn('Initial data preload fetch failed:', err?.message);
+        return null;
+      })
       .finally(() => {
         initialDataPromise = null;
       });
   }
   return initialDataPromise;
+}
+
+export function resetInitialDataCache() {
+  cachedInitialData = null;
+  initialDataPromise = null;
 }

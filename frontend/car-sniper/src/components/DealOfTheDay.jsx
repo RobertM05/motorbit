@@ -9,32 +9,43 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '' 
 
 const DealOfTheDay = () => {
     const { t } = useLanguage();
-    const [deals, setDeals] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [deals, setDeals] = useState(() => getCached('top_deals') || []);
+    const [loading, setLoading] = useState(() => (getCached('top_deals') || []).length === 0);
     const [error, setError] = useState(null);
 
     useEffect(() => {
+        let isMounted = true;
+
         const fetchDeals = async () => {
             try {
-                if (deals.length === 0) {
-                    try {
-                        const initData = await fetchInitialData();
-                        if (initData && initData.deals && initData.deals.length > 0) {
+                // 1. Check preloaded initial-data.json (deduplicated)
+                try {
+                    const initData = await fetchInitialData();
+                    if (initData && Array.isArray(initData.deals) && initData.deals.length > 0) {
+                        if (isMounted) {
                             setDeals(initData.deals);
                             setLoading(false);
-                            return;
+                            setCache('top_deals', initData.deals);
                         }
-                    } catch { /* fall through to API */ }
-                }
-                if (deals.length > 0) return;
+                        return;
+                    }
+                } catch { /* fall through to API */ }
+
+                // 2. Check local client cache
                 const cached = getCached('top_deals');
-                if (cached) {
-                    setDeals(cached);
-                    setLoading(false);
+                if (cached && cached.length > 0) {
+                    if (isMounted) {
+                        setDeals(cached);
+                        setLoading(false);
+                    }
                     return;
                 }
-                setLoading(true);
-                setError(null);
+
+                if (isMounted) {
+                    setLoading(true);
+                    setError(null);
+                }
+
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 10000);
                 try {
@@ -49,13 +60,15 @@ const DealOfTheDay = () => {
                     if (data.error) {
                         throw new Error(data.error);
                     }
-                    setDeals(data.results || []);
-                    setCache('top_deals', data.results || []);
+                    if (isMounted) {
+                        setDeals(data.results || []);
+                        setCache('top_deals', data.results || []);
+                    }
                 } catch (fetchErr) {
                     clearTimeout(timeoutId);
                     if (fetchErr.name === 'AbortError') {
                         const stale = getCached('top_deals');
-                        if (stale && stale.length > 0) {
+                        if (stale && stale.length > 0 && isMounted) {
                             setDeals(stale);
                             return;
                         }
@@ -63,14 +76,22 @@ const DealOfTheDay = () => {
                     throw fetchErr;
                 }
             } catch (err) {
-                console.error("Failed to fetch top deals:", err);
-                setError(err.message);
+                if (isMounted) {
+                    console.error("Failed to fetch top deals:", err);
+                    setError(err.message);
+                }
             } finally {
-                setLoading(false);
+                if (isMounted) {
+                    setLoading(false);
+                }
             }
         };
 
         fetchDeals();
+
+        return () => {
+            isMounted = false;
+        };
     }, []);
 
     if (loading) {
