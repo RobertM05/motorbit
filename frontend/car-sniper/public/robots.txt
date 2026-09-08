@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
 Disallow: /api/
+Sitemap: https://car-sniper.vercel.app/sitemap.xml
 Sitemap: https://motorbit.ro/sitemap.xml

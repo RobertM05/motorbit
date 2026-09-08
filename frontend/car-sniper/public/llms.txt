@@ -1,0 +1,17 @@
+# Motorbit
+
+> Motorbit este un agregator inteligent de anunțuri auto second hand și noi din România (OLX și Autovit), dotat cu analiză automată de piață, scoring al ofertelor (0-100) și alerte de preț în timp real.
+
+Motorbit analizează mii de mașini zilnic, comparând prețul fiecărui vehicul cu media pieței pentru aceeași marcă, model, an și rulaj, evidențiind cele mai bune oportunități de achiziție.
+
+## Secțiuni Principale
+
+- [Căutare mașini](https://car-sniper.vercel.app/): Caută vehicule după marcă, model, interval de preț, an de fabricație, combustibil, transmisie și rulaj maxim, cu calcul instantaneu al scorului de ofertă.
+- [Oferta Zilei (Deal of the Day)](https://car-sniper.vercel.app/#results-area): Cele mai profitabile oferte auto raportate la prețul mediu al pieței.
+- [Planuri și Tarife](https://car-sniper.vercel.app/pricing): Abonamente lunare și anuale pentru dealeri auto și căutători profesioniști.
+- [Termeni și Condiții](https://car-sniper.vercel.app/termeni): Termenii de utilizare ai platformei Motorbit.
+- [Politica de Confidențialitate](https://car-sniper.vercel.app/confidentialitate): Politica de protecție a datelor cu caracter personal și cookie-uri.
+
+## API & Date
+
+- [Sitemap](https://car-sniper.vercel.app/sitemap.xml): Structura XML a paginilor indexabile pentru motoare de căutare și roboți.

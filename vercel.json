@@ -21,7 +21,24 @@
       "dest": "/backend/main.py"
     },
     {
-      "src": "/(assets/.*|.*\\.(ico|png|jpg|jpeg|svg|css|js|json|woff|woff2|ttf|eot))$",
+      "src": "/assets/(.*)",
+      "headers": {
+        "cache-control": "public, max-age=31536000, immutable"
+      },
+      "dest": "/frontend/car-sniper/assets/$1"
+    },
+    {
+      "src": "/(robots\\.txt|sitemap\\.xml|llms\\.txt)",
+      "headers": {
+        "cache-control": "public, max-age=86400"
+      },
+      "dest": "/frontend/car-sniper/$1"
+    },
+    {
+      "src": "/(.*\\.(ico|png|jpg|jpeg|webp|svg|css|js|json|woff|woff2|ttf|eot|webmanifest))$",
+      "headers": {
+        "cache-control": "public, max-age=31536000, immutable"
+      },
       "dest": "/frontend/car-sniper/$1"
     },
     {

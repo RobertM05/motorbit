@@ -41,13 +41,15 @@ const SearchForm = ({
         {/* Top Row: 4 Columns */}
         <div className="search-fields-row">
           <div className="form-group">
-            <label>{t('search', 'make')}</label>
+            <label htmlFor="search-make">{t('search', 'make')}</label>
             <select
+              id="search-make"
               name="make"
               value={formData.make}
               onChange={handleChange}
               disabled={loadingBrands}
               className="form-control"
+              aria-label={t('search', 'make')}
             >
               <option value="">{t('search', 'anyMake')}</option>
               {brands.map((b) => (
@@ -57,13 +59,15 @@ const SearchForm = ({
           </div>
 
           <div className="form-group">
-            <label>{t('search', 'model')}</label>
+            <label htmlFor="search-model">{t('search', 'model')}</label>
             <select
+              id="search-model"
               name="model"
               value={formData.model}
               onChange={handleChange}
               disabled={!formData.make || loadingModels}
               className="form-control"
+              aria-label={t('search', 'model')}
             >
               <option value="">{t('search', 'anyModel')}</option>
               {models.map((m) => (
@@ -73,26 +77,30 @@ const SearchForm = ({
           </div>
 
           <div className="form-group">
-            <label>{t('search', 'minPrice')}</label>
+            <label htmlFor="search-min-price">{t('search', 'minPrice')}</label>
             <input
+              id="search-min-price"
               type="number"
               name="minPrice"
               value={formData.minPrice}
               onChange={handleChange}
               placeholder="0"
               className="form-control"
+              aria-label={t('search', 'minPrice')}
             />
           </div>
 
           <div className="form-group">
-            <label>{t('search', 'maxPrice')}</label>
+            <label htmlFor="search-max-price">{t('search', 'maxPrice')}</label>
             <input
+              id="search-max-price"
               type="number"
               name="maxPrice"
               value={formData.maxPrice}
               onChange={handleChange}
               placeholder="100000"
               className="form-control"
+              aria-label={t('search', 'maxPrice')}
             />
           </div>
         </div>
@@ -101,44 +109,57 @@ const SearchForm = ({
         {showAdvanced && (
           <div className="search-fields-row search-fields-advanced">
             <div className="form-group">
-              <label>{t('search', 'minYear')}</label>
+              <label htmlFor="search-min-year">{t('search', 'minYear')}</label>
               <input
+                id="search-min-year"
                 type="number"
                 name="minYear"
                 value={formData.minYear}
                 onChange={handleChange}
                 placeholder="2010"
                 className="form-control"
+                aria-label={t('search', 'minYear')}
               />
             </div>
 
             <div className="form-group">
-              <label>{t('search', 'maxYear')}</label>
+              <label htmlFor="search-max-year">{t('search', 'maxYear')}</label>
               <input
+                id="search-max-year"
                 type="number"
                 name="maxYear"
                 value={formData.maxYear}
                 onChange={handleChange}
                 placeholder="2024"
                 className="form-control"
+                aria-label={t('search', 'maxYear')}
               />
             </div>
 
             <div className="form-group">
-              <label>{t('search', 'maxKm')}</label>
+              <label htmlFor="search-max-km">{t('search', 'maxKm')}</label>
               <input
+                id="search-max-km"
                 type="number"
                 name="maxKm"
                 value={formData.maxKm}
                 onChange={handleChange}
                 placeholder="200000"
                 className="form-control"
+                aria-label={t('search', 'maxKm')}
               />
             </div>
 
             <div className="form-group">
-              <label>{t('filters', 'fuel')}</label>
-              <select name="fuel" value={formData.fuel || ""} onChange={handleChange} className="form-control">
+              <label htmlFor="search-fuel">{t('filters', 'fuel')}</label>
+              <select
+                id="search-fuel"
+                name="fuel"
+                value={formData.fuel || ""}
+                onChange={handleChange}
+                className="form-control"
+                aria-label={t('filters', 'fuel')}
+              >
                 <option value="">{t('filters', 'any')}</option>
                 <option value="Petrol">{t('filters', 'petrol')}</option>
                 <option value="Diesel">{t('filters', 'diesel')}</option>
@@ -148,8 +169,15 @@ const SearchForm = ({
             </div>
 
             <div className="form-group">
-              <label>{t('filters', 'transmission')}</label>
-              <select name="transmission" value={formData.transmission || ""} onChange={handleChange} className="form-control">
+              <label htmlFor="search-transmission">{t('filters', 'transmission')}</label>
+              <select
+                id="search-transmission"
+                name="transmission"
+                value={formData.transmission || ""}
+                onChange={handleChange}
+                className="form-control"
+                aria-label={t('filters', 'transmission')}
+              >
                 <option value="">{t('filters', 'any')}</option>
                 <option value="Automatic">{t('filters', 'automatic')}</option>
                 <option value="Manual">{t('filters', 'manual')}</option>
@@ -157,12 +185,14 @@ const SearchForm = ({
             </div>
 
             <div className="form-group">
-              <label>{t('search', 'limit')}</label>
+              <label htmlFor="search-limit">{t('search', 'limit')}</label>
               <select
+                id="search-limit"
                 name="limit"
                 value={formData.limit}
                 onChange={handleChange}
                 className="form-control"
+                aria-label={t('search', 'limit')}
               >
                 <option value="50">{t('search', 'fast')}</option>
                 <option value="100">{t('search', 'normal')}</option>

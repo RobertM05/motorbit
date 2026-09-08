@@ -10,12 +10,6 @@ const DEFAULT_STATS = {
     refreshRate: '5 min',
 };
 
-const currencyFormatter = new Intl.NumberFormat('ro-RO', {
-    style: 'currency',
-    currency: 'EUR',
-    maximumFractionDigits: 0,
-});
-
 const TrustStats = ({ stats }) => {
     const { t } = useLanguage();
     const s = { ...DEFAULT_STATS, ...stats };

@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Routes, Route, useNavigate, useParams, useLocation } from "react-router-dom";
+import React, { useState, useEffect, useCallback } from "react";
+import { Routes, Route, useParams, useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import SearchForm from "./components/SearchForm";
 import ResultsList from "./components/ResultsList";
@@ -13,26 +13,25 @@ import DealOfTheDay from "./components/DealOfTheDay";
 import TrustStats from "./components/TrustStats";
 import BrandGrid from "./components/BrandGrid";
 import FilterSidebar from "./components/FilterSidebar";
-import LegalPage from "./components/LegalPage";
-import PartnerDashboard from "./components/PartnerDashboard";
-import DealerProfile from "./components/DealerProfile";
-import PricingPage from "./components/PricingPage";
-import AlertManager from "./components/AlertManager";
 import Breadcrumbs from "./components/Breadcrumbs";
 import { useLanguage } from "./LanguageContext";
 import { initGA, logPageView, logEvent } from "./utils/analytics";
-import { clearSearchHistory } from "./utils/searchHistory";
-import { toggleCompareCar } from "./utils/carComparison";
 import { useAuth } from "./contexts/AuthContext";
 import { useSearch } from "./contexts/SearchContext";
 import { Sun, Moon, SlidersHorizontal } from "lucide-react";
 import "./App.css";
-import logo from './assets/logo.png';
+import logo from './assets/logo.webp';
+
+// Lazy load non-landing page routes for code splitting (recharts, etc.)
+const LegalPage = React.lazy(() => import("./components/LegalPage"));
+const PartnerDashboard = React.lazy(() => import("./components/PartnerDashboard"));
+const DealerProfile = React.lazy(() => import("./components/DealerProfile"));
+const PricingPage = React.lazy(() => import("./components/PricingPage"));
+const AlertManager = React.lazy(() => import("./components/AlertManager"));
 
 
 const AppContent = () => {
   const { t, lang, setLang } = useLanguage();
-  const navigate = useNavigate();
   const location = useLocation();
   const { make: urlMake, model: urlModel } = useParams();
 
@@ -40,8 +39,8 @@ const AppContent = () => {
   const {
     formData, setFormData, brands, models, loadingBrands, loadingModels,
     loading, error, results, stats, currentPage, itemsPerPage, sortBy, setSortBy,
-    sidebarFilters, setSidebarFilters, searchHistory, setSearchHistory,
-    comparedCars, setComparedCars, showCompare, setShowCompare, siteStats,
+    sidebarFilters, setSidebarFilters,
+    comparedCars, showCompare, setShowCompare, siteStats,
     handleSearch, handleSearchSubmit, handleBrandSelect, handleFilterApply,
     handleClearCompare, currentCars, paginate
   } = useSearch();
@@ -104,7 +103,6 @@ const AppContent = () => {
       const model = decodeURIComponent(urlModel);
 
       setFormData(prev => ({ ...prev, make, model }));
-      fetchModels(make);
       handleSearch(null, { ...formData, make, model });
     }
   }, [urlMake, urlModel]);
@@ -225,7 +223,7 @@ const AppContent = () => {
       <nav className="top-nav">
         <div className="nav-brand">
           <div style={{ width: '32px', height: '32px', overflow: 'hidden', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <img src={logo} alt="Motorbit Logo" style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scale(1.8)' }} onError={(e) => e.target.parentElement.style.display = 'none'} />
+            <img src={logo} alt="Motorbit Logo" width="32" height="32" fetchPriority="high" style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scale(1.8)' }} onError={(e) => e.target.parentElement.style.display = 'none'} />
           </div>
           <span>MOTORBIT</span>
         </div>
@@ -259,7 +257,8 @@ const AppContent = () => {
         </div>
       </nav>
 
-      <div className="hero-section">
+      <main id="main-content">
+        <div className="hero-section">
         <div className="container">
           <h1 className="hero-title">{t('hero', 'title')}</h1>
           <p className="hero-subtitle">
@@ -427,6 +426,8 @@ const AppContent = () => {
           <button className="filter-clear-btn" onClick={handleClearCompare}>Clear</button>
         </div>
       )}
+      </div>
+      </main>
       <footer className="site-footer">
           <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginBottom: '1rem' }}>
              <a href="/termeni" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>{t('legal', 'termsTitle')}</a>
@@ -434,31 +435,32 @@ const AppContent = () => {
           </div>
           <p>{t('footer', null, { year: new Date().getFullYear() })}</p>
         </footer>
-      </div>
     </div>
   );
 };
 
 const App = () => {
   return (
-    <Routes>
-      <Route path="/" element={<AppContent />} />
-      <Route path="/masini/:make/:model" element={<AppContent />} />
-      <Route path="/termeni" element={<div><nav className="top-nav"><div className="nav-brand"><a href="/" style={{textDecoration: 'none', color: 'inherit'}}><span>M</span> MOTORBIT</a></div></nav><LegalPage type="terms" /></div>} />
-      <Route path="/confidentialitate" element={<div><nav className="top-nav"><div className="nav-brand"><a href="/" style={{textDecoration: 'none', color: 'inherit'}}><span>M</span> MOTORBIT</a></div></nav><LegalPage type="privacy" /></div>} />
-      <Route path="/partner-dashboard" element={<PartnerDashboard />} />
-      <Route path="/pricing" element={<div><nav className="top-nav"><div className="nav-brand"><a href="/" style={{textDecoration: 'none', color: 'inherit'}}><span>M</span> MOTORBIT</a></div></nav><PricingPage /></div>} />
-          <Route path="/dealer/:email" element={<div><nav className="top-nav"><div className="nav-brand"><a href="/" style={{textDecoration: 'none', color: 'inherit'}}><span>M</span> MOTORBIT</a></div></nav><DealerProfile /></div>} />
-      <Route path="/alerts" element={<div><nav className="top-nav"><div className="nav-brand"><a href="/" style={{textDecoration: 'none', color: 'inherit'}}><span>M</span> MOTORBIT</a></div></nav><AlertManager /></div>} />
-      <Route path="*" element={
-        <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)', color: 'var(--text-primary)', fontFamily: 'DM Sans, sans-serif' }}>
-          <Helmet><title>404 - Pagina nu a fost gasita | Motorbit</title><meta name="robots" content="noindex" /></Helmet>
-          <h1 style={{ fontSize: '4rem', fontWeight: 800, margin: 0, color: 'var(--primary-color)' }}>404</h1>
-          <p style={{ fontSize: '1.25rem', color: 'var(--text-secondary)', margin: '1rem 0' }}>Pagina nu a fost gasita</p>
-          <a href="/" style={{ color: 'var(--primary-color)', fontWeight: 600, textDecoration: 'none', marginTop: '1rem' }}>Inapoi acasa</a>
-        </div>
-      } />
-    </Routes>
+    <React.Suspense fallback={<div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>Se încarcă...</div>}>
+      <Routes>
+        <Route path="/" element={<AppContent />} />
+        <Route path="/masini/:make/:model" element={<AppContent />} />
+        <Route path="/termeni" element={<div><nav className="top-nav"><div className="nav-brand"><a href="/" style={{textDecoration: 'none', color: 'inherit'}}><span>M</span> MOTORBIT</a></div></nav><main id="main-content"><LegalPage type="terms" /></main></div>} />
+        <Route path="/confidentialitate" element={<div><nav className="top-nav"><div className="nav-brand"><a href="/" style={{textDecoration: 'none', color: 'inherit'}}><span>M</span> MOTORBIT</a></div></nav><main id="main-content"><LegalPage type="privacy" /></main></div>} />
+        <Route path="/partner-dashboard" element={<main id="main-content"><PartnerDashboard /></main>} />
+        <Route path="/pricing" element={<div><nav className="top-nav"><div className="nav-brand"><a href="/" style={{textDecoration: 'none', color: 'inherit'}}><span>M</span> MOTORBIT</a></div></nav><main id="main-content"><PricingPage /></main></div>} />
+        <Route path="/dealer/:email" element={<div><nav className="top-nav"><div className="nav-brand"><a href="/" style={{textDecoration: 'none', color: 'inherit'}}><span>M</span> MOTORBIT</a></div></nav><main id="main-content"><DealerProfile /></main></div>} />
+        <Route path="/alerts" element={<div><nav className="top-nav"><div className="nav-brand"><a href="/" style={{textDecoration: 'none', color: 'inherit'}}><span>M</span> MOTORBIT</a></div></nav><main id="main-content"><AlertManager /></main></div>} />
+        <Route path="*" element={
+          <main id="main-content" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)', color: 'var(--text-primary)', fontFamily: 'DM Sans, sans-serif' }}>
+            <Helmet><title>404 - Pagina nu a fost gasita | Motorbit</title><meta name="robots" content="noindex" /></Helmet>
+            <h1 style={{ fontSize: '4rem', fontWeight: 800, margin: 0, color: 'var(--primary-color)' }}>404</h1>
+            <p style={{ fontSize: '1.25rem', color: 'var(--text-secondary)', margin: '1rem 0' }}>Pagina nu a fost gasita</p>
+            <a href="/" style={{ color: 'var(--primary-color)', fontWeight: 600, textDecoration: 'none', marginTop: '1rem' }}>Inapoi acasa</a>
+          </main>
+        } />
+      </Routes>
+    </React.Suspense>
   );
 };
 
