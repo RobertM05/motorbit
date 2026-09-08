@@ -4,6 +4,7 @@ import { getSearchHistory, addSearchHistory } from '../utils/searchHistory';
 import { getComparedCars, clearComparedCars } from '../utils/carComparison';
 import { logEvent } from '../utils/analytics';
 import { getCached, setCache } from '../utils/cache';
+import { fetchInitialData } from '../utils/initialData';
 
 const SearchContext = createContext(null);
 
@@ -59,33 +60,45 @@ export const SearchProvider = ({ children }) => {
   const [siteStats, setSiteStats] = useState({});
 
   useEffect(() => {
-    fetchBrands();
-    
-    // Fetch initial stats
-    fetch('/initial-data.json').then(r => r.json()).then(d => { 
-      if (d.stats && d.stats.carsMonitored) { 
-        setSiteStats(d.stats); 
-        setCache('site_stats', d.stats); 
-      } 
-    }).catch(() => {});
-    
+    // 1. Instant hydration from client cache
+    const cachedBrands = getCached('car_brands');
+    if (cachedBrands && cachedBrands.length > 0) {
+      setBrands(cachedBrands);
+    }
     const cachedStats = getCached('site_stats');
-    if (cachedStats) setSiteStats(cachedStats);
-    
-    fetch(API_BASE_URL + '/api/site/stats').then(r => r.json()).then(d => { 
-      setSiteStats(d); 
-      setCache('site_stats', d); 
-    }).catch(() => {});
-    
+    if (cachedStats) {
+      setSiteStats(cachedStats);
+    }
+
+    // 2. Fetch deduplicated initial preloaded data
+    fetchInitialData().then((d) => {
+      if (!d) return;
+      if (d.brands && d.brands.length > 0) {
+        setBrands((prev) => (prev.length === 0 ? d.brands : prev));
+        setCache('car_brands', d.brands, 86400000); // 24h
+      }
+      if (d.stats && d.stats.carsMonitored) {
+        setSiteStats(d.stats);
+        setCache('site_stats', d.stats);
+      }
+    });
+
+    // 3. Background revalidation
+    fetchBrands();
+
     setComparedCars(getComparedCars());
   }, []);
 
   const fetchBrands = async () => {
-    setLoadingBrands(true);
     try {
       const response = await fetch(`${API_BASE_URL}/api/brands`);
-      const data = await response.json();
-      if (data.brands) setBrands(data.brands);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.brands && data.brands.length > 0) {
+          setBrands(data.brands);
+          setCache('car_brands', data.brands, 86400000);
+        }
+      }
     } catch (err) {
       console.error('Error loading brands:', err);
     } finally {
@@ -93,30 +106,49 @@ export const SearchProvider = ({ children }) => {
     }
   };
 
-  const fetchModels = async (brand) => {
-    if (!brand) {
-      setModels([]);
-      return;
-    }
-    setLoadingModels(true);
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/models/${encodeURIComponent(brand)}`);
-      const data = await response.json();
-      setModels(data.models || []);
-    } catch (err) {
-      console.error('Error loading models:', err);
-      setModels([]);
-    } finally {
-      setLoadingModels(false);
-    }
-  };
-
   useEffect(() => {
+    let ignore = false;
     if (formData.make) {
-      fetchModels(formData.make);
+      const brand = formData.make;
+      const cacheKey = `models_${brand.toLowerCase().trim()}`;
+      const cached = getCached(cacheKey);
+
+      if (cached && Array.isArray(cached) && cached.length > 0) {
+        setModels(cached);
+        setLoadingModels(false);
+      } else {
+        setLoadingModels(true);
+        fetch(`${API_BASE_URL}/api/models/${encodeURIComponent(brand)}`)
+          .then((res) => (res.ok ? res.json() : {}))
+          .then((data) => {
+            if (!ignore) {
+              const list = data.models || [];
+              setModels(list);
+              if (list.length > 0) {
+                setCache(cacheKey, list, 86400000);
+              }
+            }
+          })
+          .catch((err) => {
+            if (!ignore) {
+              console.error('Error loading models:', err);
+              setModels([]);
+            }
+          })
+          .finally(() => {
+            if (!ignore) {
+              setLoadingModels(false);
+            }
+          });
+      }
     } else {
       setModels([]);
+      setLoadingModels(false);
     }
+
+    return () => {
+      ignore = true;
+    };
   }, [formData.make]);
 
   // Sync sidebar filters from formData

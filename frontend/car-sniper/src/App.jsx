@@ -259,16 +259,30 @@ const AppContent = () => {
 
       <main id="main-content">
         <div className="hero-section">
-        <div className="container">
-          <h1 className="hero-title">{t('hero', 'title')}</h1>
-          <p className="hero-subtitle">
-            {t('hero', 'subtitle')}
-          </p>
-          <div className="hero-features">
-            {t('hero', 'features')}
+          <picture>
+            <source media="(max-width: 768px)" srcSet="/hero_bg_mobile.webp" type="image/webp" />
+            <source media="(min-width: 769px)" srcSet="/hero_bg_desktop.webp" type="image/webp" />
+            <img
+              src="/hero_bg_desktop.webp"
+              alt="Motorbit Hero Background"
+              className="hero-bg-img"
+              fetchpriority="high"
+              decoding="async"
+              width="1920"
+              height="550"
+            />
+          </picture>
+          <div className="hero-overlay"></div>
+          <div className="container">
+            <h1 className="hero-title">{t('hero', 'title')}</h1>
+            <p className="hero-subtitle">
+              {t('hero', 'subtitle')}
+            </p>
+            <div className="hero-features">
+              {t('hero', 'features')}
+            </div>
           </div>
         </div>
-      </div>
 
       <TrustStats stats={siteStats} />
 

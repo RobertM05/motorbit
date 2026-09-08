@@ -1,8 +1,9 @@
-from fastapi import FastAPI, Request, BackgroundTasks
+from fastapi import FastAPI, Request, BackgroundTasks, Response
 from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
 import threading
 import time
+import functools
 from pydantic import BaseModel
 import os
 from dotenv import load_dotenv
@@ -89,8 +90,11 @@ def root():
 
 
 @app.get("/api/site/stats")
-def api_site_stats():
+def api_site_stats(response: Response):
     """Return real-time site statistics."""
+    response.headers["Cache-Control"] = (
+        "public, max-age=120, s-maxage=300, stale-while-revalidate=600"
+    )
     try:
         ads_count = car_db_optimizer.get_active_ads_count()
         today_count = car_db_optimizer.get_ads_updated_today_count()
@@ -419,9 +423,12 @@ _TOP_DEALS_CACHE_TTL = _CACHE_TIMEOUT
 
 
 @app.get("/api/deals/top")
-@limiter.limit("30/minute")
-def get_top_deals(request: Request):
+@limiter.limit("60/minute")
+def get_top_deals(request: Request, response: Response):
     """Return top-scored active deals using pre-computed market snapshots."""
+    response.headers["Cache-Control"] = (
+        "public, max-age=120, s-maxage=300, stale-while-revalidate=600"
+    )
     try:
         global _TOP_DEALS_CACHE
         current_time = time.time()
@@ -1212,31 +1219,41 @@ def test_scraper(request: Request):
         return {"error": f"Eroare la testarea scraper-ului: {str(e)}"}
 
 
-import os
-
-
+@functools.lru_cache(maxsize=1)
 def get_autovit_catalog():
     catalog_path = os.path.join(os.path.dirname(__file__), "autovit_catalog.json")
     with open(catalog_path, "r", encoding="utf-8") as f:
         return json.load(f)
 
 
+@functools.lru_cache(maxsize=1)
+def get_cached_brands_list():
+    catalog = get_autovit_catalog()
+    brands = list(catalog.keys())
+    brands = [car_db_optimizer.format_brand_name(b) for b in brands]
+    return sorted(list(set(brands)))
+
+
 @app.get("/api/brands")
-@limiter.limit("30/minute")
-def get_brands(request: Request):
+@limiter.limit("60/minute")
+def get_brands(request: Request, response: Response):
     try:
-        catalog = get_autovit_catalog()
-        brands = list(catalog.keys())
-        brands = [car_db_optimizer.format_brand_name(b) for b in brands]
-        return {"brands": sorted(list(set(brands))), "total": len(brands)}
+        response.headers["Cache-Control"] = (
+            "public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400"
+        )
+        brands = get_cached_brands_list()
+        return {"brands": brands, "total": len(brands)}
     except Exception as e:
         return {"error": f"Eroare la obținerea mărcilor: {str(e)}"}
 
 
 @app.get("/api/models/{brand}")
-@limiter.limit("30/minute")
-def get_models_for_brand(request: Request, brand: str):
+@limiter.limit("60/minute")
+def get_models_for_brand(request: Request, response: Response, brand: str):
     try:
+        response.headers["Cache-Control"] = (
+            "public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400"
+        )
         catalog = get_autovit_catalog()
         target_brand_key = next(
             (
