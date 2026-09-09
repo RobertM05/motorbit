@@ -30,14 +30,19 @@ const CarCard = ({ car, index = 0, variant = "default" }) => {
     const siteName = car.subsource || car.source || (isOlx ? 'OLX' : 'Autovit');
     const badgeClass = isOlx ? 'badge-olx' : 'badge-autovit';
 
-    // Deal Score Logic
+    // Deal Score Logic: normalize to 0-100 integer and assign tier
     let dealClass = "";
     let dealTextKey = "";
+    let normalizedScore = null;
     if (car.deal_score != null) {
-        if (car.deal_score >= 80) { dealClass = "deal-excellent"; dealTextKey = "excellent"; }
-        else if (car.deal_score >= 60) { dealClass = "deal-good"; dealTextKey = "good"; }
-        else if (car.deal_score >= 40) { dealClass = "deal-fair"; dealTextKey = "fair"; }
-        else { dealClass = "deal-overpriced"; dealTextKey = "overpriced"; }
+        const rawScore = Number(car.deal_score);
+        if (!isNaN(rawScore)) {
+            normalizedScore = (rawScore > 0 && rawScore <= 10) ? Math.round(rawScore * 10) : Math.round(rawScore);
+            if (normalizedScore >= 80) { dealClass = "deal-excellent"; dealTextKey = "excellent"; }
+            else if (normalizedScore >= 60) { dealClass = "deal-good"; dealTextKey = "good"; }
+            else if (normalizedScore >= 40) { dealClass = "deal-fair"; dealTextKey = "fair"; }
+            else { dealClass = "deal-overpriced"; dealTextKey = "overpriced"; }
+        }
     }
 
     const handleCompare = (e) => {
@@ -70,9 +75,9 @@ const CarCard = ({ car, index = 0, variant = "default" }) => {
                         <div className={`site-badge-overlay ${badgeClass}`}>
                             {siteName}
                         </div>
-                        {car.deal_score != null && (
+                        {normalizedScore != null && (
                             <div className={`deal-score-circle ${dealClass}`}>
-                                {car.deal_score}
+                                {normalizedScore}
                             </div>
                         )}
                         <button className="compare-btn-deal" onClick={handleCompare} title={compared ? "Remove from compare" : "Add to compare"}>
@@ -102,9 +107,9 @@ const CarCard = ({ car, index = 0, variant = "default" }) => {
                             {car.fuel && <span className="spec-item-deal">⛽ {car.fuel}</span>}
                         </div>
 
-                        {car.deal_score != null && (
+                        {normalizedScore != null && (
                             <div className={`deal-inline-score ${dealClass}`}>
-                                <span className="deal-dot">●</span> {t('deal', dealTextKey)} · {t('deal', 'scoreLabel')} {car.deal_score}/100
+                                <span className="deal-dot">●</span> {t('deal', dealTextKey)} · {t('deal', 'scoreLabel')} {normalizedScore}/100
                             </div>
                         )}
 
@@ -155,14 +160,14 @@ const CarCard = ({ car, index = 0, variant = "default" }) => {
                         onError={(e) => { e.target.onerror = null; e.target.src = "https://placehold.co/600x400/1e293b/cbd5e1?text=Eroare+Poză"; }}
                     />
 
-                    {car.deal_score != null && (
+                    {normalizedScore != null && (
                         <div
                             className={`deal-ring ${dealClass} group/tooltip relative ${tooltipOpen ? 'is-open' : ''}`}
                             onClick={() => {
                                 setTooltipOpen(!tooltipOpen);
                             }}
                         >
-                            <div className="deal-score">{car.deal_score}</div>
+                            <div className="deal-score">{normalizedScore}</div>
                             <div className="deal-label">{t('deal', dealTextKey)}</div>
 
                             {/* Tooltip Explanation */}
