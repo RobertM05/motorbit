@@ -7,10 +7,20 @@ import { fetchInitialData } from '../utils/initialData';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '' : 'http://127.0.0.1:8000');
 
+const getValidCachedDeals = () => {
+    const cached = getCached('top_deals');
+    if (Array.isArray(cached) && cached.length > 0) {
+        // Discard old broken seed deals from cache
+        const valid = cached.filter(d => d && !String(d.id || '').startsWith('seed-deal'));
+        if (valid.length > 0) return valid;
+    }
+    return [];
+};
+
 const DealOfTheDay = () => {
     const { t } = useLanguage();
-    const [deals, setDeals] = useState(() => getCached('top_deals') || []);
-    const [loading, setLoading] = useState(() => (getCached('top_deals') || []).length === 0);
+    const [deals, setDeals] = useState(getValidCachedDeals);
+    const [loading, setLoading] = useState(() => getValidCachedDeals().length === 0);
     const [error, setError] = useState(null);
 
     useEffect(() => {
@@ -18,36 +28,38 @@ const DealOfTheDay = () => {
 
         const fetchDeals = async () => {
             try {
-                // 1. Check preloaded initial-data.json (deduplicated)
+                // 1. Instant render from preloaded initial-data.json
+                let hasValidDeals = false;
                 try {
                     const initData = await fetchInitialData();
                     if (initData && Array.isArray(initData.deals) && initData.deals.length > 0) {
-                        if (isMounted) {
-                            setDeals(initData.deals);
+                        const valid = initData.deals.filter(d => d && !String(d.id || '').startsWith('seed-deal'));
+                        if (valid.length > 0 && isMounted) {
+                            setDeals(valid);
                             setLoading(false);
-                            setCache('top_deals', initData.deals);
+                            hasValidDeals = true;
                         }
-                        return;
                     }
                 } catch { /* fall through to API */ }
 
                 // 2. Check local client cache
-                const cached = getCached('top_deals');
-                if (cached && cached.length > 0) {
-                    if (isMounted) {
+                if (!hasValidDeals) {
+                    const cached = getValidCachedDeals();
+                    if (cached.length > 0 && isMounted) {
                         setDeals(cached);
                         setLoading(false);
+                        hasValidDeals = true;
                     }
-                    return;
                 }
 
-                if (isMounted) {
+                if (!hasValidDeals && isMounted) {
                     setLoading(true);
                     setError(null);
                 }
 
+                // 3. Stale-while-revalidate: ALWAYS fetch fresh live deals from backend
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 10000);
+                const timeoutId = setTimeout(() => controller.abort(), 8000);
                 try {
                     const response = await fetch(`${API_BASE_URL}/api/deals/top`, {
                         signal: controller.signal,
@@ -60,20 +72,26 @@ const DealOfTheDay = () => {
                     if (data.error) {
                         throw new Error(data.error);
                     }
-                    if (isMounted) {
-                        setDeals(data.results || []);
-                        setCache('top_deals', data.results || []);
+                    const results = Array.isArray(data.results) ? data.results : [];
+                    if (results.length > 0 && isMounted) {
+                        setDeals(results);
+                        setCache('top_deals', results);
+                        setLoading(false);
                     }
                 } catch (fetchErr) {
                     clearTimeout(timeoutId);
                     if (fetchErr.name === 'AbortError') {
-                        const stale = getCached('top_deals');
-                        if (stale && stale.length > 0 && isMounted) {
+                        const stale = getValidCachedDeals();
+                        if (stale.length > 0 && isMounted) {
                             setDeals(stale);
+                            setLoading(false);
                             return;
                         }
                     }
-                    throw fetchErr;
+                    // If we already have initial or cached deals, don't show an error screen
+                    if (!hasValidDeals) {
+                        throw fetchErr;
+                    }
                 }
             } catch (err) {
                 if (isMounted) {
@@ -150,11 +168,16 @@ const DealOfTheDay = () => {
                     
                     let dealClass = '';
                     let dealTextKey = '';
+                    let heroScore = null;
                     if (top.deal_score != null) {
-                        if (top.deal_score >= 80) { dealClass = 'deal-excellent'; dealTextKey = 'excellent'; }
-                        else if (top.deal_score >= 60) { dealClass = 'deal-good'; dealTextKey = 'good'; }
-                        else if (top.deal_score >= 40) { dealClass = 'deal-fair'; dealTextKey = 'fair'; }
-                        else { dealClass = 'deal-overpriced'; dealTextKey = 'overpriced'; }
+                        const raw = Number(top.deal_score);
+                        if (!isNaN(raw)) {
+                            heroScore = (raw > 0 && raw <= 10) ? Math.round(raw * 10) : Math.round(raw);
+                            if (heroScore >= 80) { dealClass = 'deal-excellent'; dealTextKey = 'excellent'; }
+                            else if (heroScore >= 60) { dealClass = 'deal-good'; dealTextKey = 'good'; }
+                            else if (heroScore >= 40) { dealClass = 'deal-fair'; dealTextKey = 'fair'; }
+                            else { dealClass = 'deal-overpriced'; dealTextKey = 'overpriced'; }
+                        }
                     }
                     
                     return (
@@ -180,10 +203,10 @@ const DealOfTheDay = () => {
                                 </div>
                                 
                                 <div className="dotd-featured-content-col">
-                                    {top.deal_score != null && (
+                                    {heroScore != null && (
                                         <div className="dotd-score-header">
                                             <div className={`dotd-score-circle ${dealClass}`}>
-                                                {top.deal_score}
+                                                {heroScore}
                                             </div>
                                             <div className="dotd-score-label">
                                                 <span className={`dotd-score-text ${dealClass}`}>{t('deal', dealTextKey).toUpperCase()}</span>
