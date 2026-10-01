@@ -7,7 +7,6 @@
     "dev": "vite",
     "prebuild": "node scripts/prebuild.cjs",
     "build": "npm run prebuild && vite build",
-    "build:ssr": "vite build && vite build --ssr",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -19,8 +18,7 @@
     "react-ga4": "^3.0.1",
     "react-helmet-async": "^3.0.0",
     "react-router-dom": "^7.17.0",
-    "recharts": "^3.8.1",
-    "vike": "^0.4.260"
+    "recharts": "^3.8.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.33.0",
