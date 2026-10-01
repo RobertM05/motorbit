@@ -25,11 +25,13 @@ backend/*.sqlite
 db.sqlite
 *.sqlite
 *.db
+*_backup.csv
 
 # Local agent and session scratch. Not part of the product.
 .agents/
 AGENTS.md
 PROJECT_STATE.md
+PROJECT.md
 AI_HANDOFF.md
 HANDOFF.md
 SESSION_NOTES.md
