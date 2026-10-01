@@ -1,6 +1,0 @@
-#!/bin/bash
-# Strip Co-Authored-By lines from commit messages
-if grep -q "Co-Authored-By: Claude\|Co-Authored-By: Anthropic\|noreply@anthropic.com" "$1"; then
-  echo "❌ Commit message contains AI attribution — remove Co-Authored-By lines"
-  exit 1
-fi

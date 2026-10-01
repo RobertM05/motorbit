@@ -24,6 +24,19 @@ backend/db.sqlite
 backend/*.sqlite
 db.sqlite
 *.sqlite
+*.db
+
+# Local agent and session scratch. Not part of the product.
+.agents/
+AGENTS.md
+PROJECT_STATE.md
+AI_HANDOFF.md
+HANDOFF.md
+SESSION_NOTES.md
+CLAUDE.md
+CLINE.md
+AGENT_DOCS.md
+.githooks/
 
 # System
 .DS_Store
